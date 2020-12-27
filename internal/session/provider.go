@@ -10,6 +10,7 @@ import (
 	"github.com/valyala/fasthttp"
 
 	"github.com/authelia/authelia/internal/configuration/schema"
+	"github.com/authelia/authelia/internal/logging"
 	"github.com/authelia/authelia/internal/utils"
 )
 
@@ -129,6 +130,7 @@ func (p *Provider) UpdateExpiration(ctx *fasthttp.RequestCtx, expiration time.Du
 		return err
 	}
 
+	logging.Logger().Warnf("Setting session exp to: %v", expiration)
 	return store.SetExpiration(expiration)
 
 	/*

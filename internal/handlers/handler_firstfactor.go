@@ -132,8 +132,11 @@ func FirstFactorPost(msInitialDelay time.Duration, delayEnabled bool) middleware
 
 		userSession := session.NewDefaultUserSession()
 		defer func() {
+			ctx.Logger.Warnf("Saving session")
+
 			err = ctx.SaveSession(userSession)
 			if err != nil {
+				ctx.Logger.Warnf("Saving session err: %v", err)
 				handleAuthenticationUnauthorized(ctx, fmt.Errorf("Unable to reset the session for user %s: %s", bodyJSON.Username, err.Error()), authenticationFailedMessage)
 				return
 			}
@@ -153,8 +156,10 @@ func FirstFactorPost(msInitialDelay time.Duration, delayEnabled bool) middleware
 
 		// Set the cookie to expire if remember me is enabled and the user has asked us to
 		if keepMeLoggedIn {
+			userSession.KeepMeLoggedIn = true
 			err = ctx.Providers.SessionProvider.UpdateExpiration(ctx.RequestCtx, ctx.Providers.SessionProvider.RememberMe)
 			if err != nil {
+				ctx.Logger.Warnf("Could not update Exp")
 				handleAuthenticationUnauthorized(ctx, fmt.Errorf("Unable to update expiration timer for user %s: %s", bodyJSON.Username, err.Error()), authenticationFailedMessage)
 				return
 			}
@@ -184,7 +189,6 @@ func FirstFactorPost(msInitialDelay time.Duration, delayEnabled bool) middleware
 		userSession.Emails = userDetails.Emails
 		userSession.AuthenticationLevel = authentication.OneFactor
 		userSession.LastActivity = time.Now().Unix()
-		userSession.KeepMeLoggedIn = keepMeLoggedIn
 		refresh, refreshInterval := getProfileRefreshSettings(ctx.Configuration.AuthenticationBackend)
 
 		if refresh {
