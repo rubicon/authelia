@@ -128,12 +128,16 @@ func FirstFactorPost(msInitialDelay time.Duration, delayEnabled bool) middleware
 		ctx.Logger.Debugf("Credentials validation of user %s is ok", bodyJSON.Username)
 
 		// Reset all values from previous session before regenerating the cookie.
-		err = ctx.SaveSession(session.NewDefaultUserSession())
+		//err = ctx.SaveSession(session.NewDefaultUserSession())
 
-		if err != nil {
-			handleAuthenticationUnauthorized(ctx, fmt.Errorf("Unable to reset the session for user %s: %s", bodyJSON.Username, err.Error()), authenticationFailedMessage)
-			return
-		}
+		userSession := session.NewDefaultUserSession()
+		defer func() {
+			err = ctx.SaveSession(userSession)
+			if err != nil {
+				handleAuthenticationUnauthorized(ctx, fmt.Errorf("Unable to reset the session for user %s: %s", bodyJSON.Username, err.Error()), authenticationFailedMessage)
+				return
+			}
+		}()
 
 		err = ctx.Providers.SessionProvider.RegenerateSession(ctx.RequestCtx)
 
@@ -174,7 +178,6 @@ func FirstFactorPost(msInitialDelay time.Duration, delayEnabled bool) middleware
 		ctx.Logger.Tracef("Details for user %s => groups: %s, emails %s", bodyJSON.Username, userDetails.Groups, userDetails.Emails)
 
 		// And set those information in the new session.
-		userSession := ctx.GetSession()
 		userSession.Username = userDetails.Username
 		userSession.DisplayName = userDetails.DisplayName
 		userSession.Groups = userDetails.Groups
@@ -187,8 +190,6 @@ func FirstFactorPost(msInitialDelay time.Duration, delayEnabled bool) middleware
 		if refresh {
 			userSession.RefreshTTL = ctx.Clock.Now().Add(refreshInterval)
 		}
-
-		err = ctx.SaveSession(userSession)
 
 		expiration, err = ctx.Providers.SessionProvider.GetExpiration(ctx.RequestCtx)
 		if err != nil {
