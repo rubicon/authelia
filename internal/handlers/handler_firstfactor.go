@@ -156,6 +156,13 @@ func FirstFactorPost(msInitialDelay time.Duration, delayEnabled bool) middleware
 			}
 		}
 
+		expiration, err := ctx.Providers.SessionProvider.GetExpiration(ctx.RequestCtx)
+		if err != nil {
+			ctx.Logger.Tracef("Handle 1FA Session Expiration Error: %v", err)
+		}
+
+		ctx.Logger.Tracef("Handle 1FA Session Expiration: %v", expiration)
+
 		// Get the details of the given user from the user provider.
 		userDetails, err := ctx.Providers.UserProvider.GetDetails(bodyJSON.Username)
 
@@ -182,6 +189,13 @@ func FirstFactorPost(msInitialDelay time.Duration, delayEnabled bool) middleware
 		}
 
 		err = ctx.SaveSession(userSession)
+
+		expiration, err = ctx.Providers.SessionProvider.GetExpiration(ctx.RequestCtx)
+		if err != nil {
+			ctx.Logger.Tracef("Handle 1FA Session Expiration Error 2: %v", err)
+		}
+
+		ctx.Logger.Tracef("Handle 1FA Session Expiration 2: %v", expiration)
 
 		if err != nil {
 			handleAuthenticationUnauthorized(ctx, fmt.Errorf("Unable to save session of user %s", bodyJSON.Username), authenticationFailedMessage)
