@@ -10,6 +10,7 @@ import (
 	"github.com/valyala/fasthttp"
 
 	"github.com/authelia/authelia/internal/configuration/schema"
+	"github.com/authelia/authelia/internal/logging"
 	"github.com/authelia/authelia/internal/utils"
 )
 
@@ -107,13 +108,7 @@ func (p *Provider) SaveSession(ctx *fasthttp.RequestCtx, userSession UserSession
 
 	store.Set(userSessionStorerKey, userSessionJSON)
 
-	err = p.sessionHolder.Save(ctx, store)
-
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return p.sessionHolder.Save(ctx, store)
 }
 
 // RegenerateSession regenerate a session ID.
@@ -137,11 +132,19 @@ func (p *Provider) UpdateExpiration(ctx *fasthttp.RequestCtx, expiration time.Du
 
 	err = store.SetExpiration(expiration)
 
+	logging.Logger().Tracef("Setting session expriration to %v", expiration)
+
 	if err != nil {
+		logging.Logger().Errorf("Error setting session: %v", err)
 		return err
 	}
 
-	return p.sessionHolder.Save(ctx, store)
+	err = p.sessionHolder.Save(ctx, store)
+	if err != nil {
+		logging.Logger().Errorf("Error saving session: %v", err)
+		return err
+	}
+	return nil
 }
 
 // GetExpiration get the expiration of the current session.
