@@ -132,6 +132,10 @@ func unmarshal(ko *koanf.Koanf, val *schema.StructValidator, path string, o any,
 		definitions = &schema.Definitions{}
 	}
 
+	if definitions.Network == nil {
+		definitions.Network = map[string][]*net.IPNet{}
+	}
+
 	c := koanf.UnmarshalConf{
 		DecoderConfig: &mapstructure.DecoderConfig{
 			DecodeHook: mapstructure.ComposeDecodeHookFunc(
@@ -148,6 +152,7 @@ func unmarshal(ko *koanf.Koanf, val *schema.StructValidator, path string, o any,
 				StringToTLSVersionHookFunc(),
 				StringToPasswordDigestHookFunc(),
 				StringToIPNetworksHookFunc(definitions.Network),
+				StringToUUIDHookFunc(),
 				ToTimeDurationHookFunc(),
 				ToRefreshIntervalDurationHookFunc(),
 			),

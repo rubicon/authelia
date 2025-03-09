@@ -1,6 +1,4 @@
 ---
-default_redirection_url: 'https://home.example.com:8080/'
-
 server:
   address: 'tcp://127.0.0.1:9091'
   endpoints:
@@ -82,6 +80,9 @@ definitions:
     lan:
       - '192.168.1.0/24'
       - '192.168.2.0/24'
+  user_attributes:
+    example:
+      expression: '"admin" in groups'
 
 access_control:
   default_policy: 'deny'
@@ -158,7 +159,10 @@ session:
   name: 'authelia_session'
   expiration: '1h'  # 1 hour
   inactivity: '5m'  # 5 minutes
-  domain: 'example.com'
+  cookies:
+    - domain: 'example.com'
+      default_redirection_url: 'https://home.example.com:8080/'
+      authelia_url: 'https://auth.example.com'
   redis:
     host: '127.0.0.1'
     port: 6379
